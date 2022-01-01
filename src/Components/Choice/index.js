@@ -14,11 +14,23 @@ const useStyles = makeStyles((theme) => {
   return {
     root: {
       flexGrow: 1,
+      margin: 5,
     },
     slider: {
       "&.MuiSlider-root": {
         width: "200px",
       },
+    },
+    sliderContainer: {
+      [theme.breakpoints.up("sm")]: {
+        display: "flex",
+      },
+      display: "contents",
+    },
+    sliderValue: {
+      width: 25,
+      margin: 3,
+      paddingTop: 5,
     },
   };
 });
@@ -30,64 +42,59 @@ function Choice(props) {
     choiceIdx,
     choice: { key: propKey, value: propValue },
   } = props;
-  const [value, setValue] = useState(propValue || 0);
-  const [key, setKey] = useState(propKey || "");
-  const [hideSlider, setHideSlider] = useState(true);
 
   function handleSliderChange(event, newValue) {
-    setValue(newValue);
+    updateChoices({ key: propKey, value: newValue }, "update", choiceIdx);
   }
 
   function handleInputChange(event) {
     const {
-      target: { value },
+      target: { value: key },
     } = event;
 
-    console.log(!value);
-    setHideSlider(!value);
-    setKey(value);
+    updateChoices({ key, value: propValue }, "update", choiceIdx);
   }
 
   function removeChoice() {
-    updateChoices({}, "remove", choiceIdx);
+    updateChoices(null, "remove", choiceIdx);
   }
-
-  useEffect(() => {
-    if (key) {
-      updateChoices({ key: value }, "update", choiceIdx);
-    }
-  }, [value, key]);
 
   return (
     <div className={classes.root}>
       <Grid container spacing={1} alignItems="center">
         <Grid item xs>
+          <Tooltip title="remove line">
+            <IconButton onClick={() => removeChoice()}>
+              <ClearIcon />
+            </IconButton>
+          </Tooltip>
           <TextField
             id="outlined-size-small"
-            value={key}
+            value={propKey}
             size="small"
             onChange={handleInputChange}
           />
         </Grid>
-        {hideSlider ? null : (
+        {!propKey ? null : (
           <Grid item xs>
-            <Slider
-              value={typeof value === "number" ? value : 0}
-              onChange={handleSliderChange}
-              aria-labelledby="input-slider"
-              marks
-              min={0}
-              max={10}
-              step={1}
-            />
-            <Typography id="input-slider" variant="label">
-              {value}
-            </Typography>
-            <Tooltip title="remove line">
-              <IconButton onClick={() => removeChoice()}>
-                <ClearIcon />
-              </IconButton>
-            </Tooltip>
+            <div className={classes.sliderContainer}>
+              <Typography
+                className={classes.sliderValue}
+                id="input-slider"
+                variant="label"
+              >
+                {propValue}
+              </Typography>
+              <Slider
+                value={propValue}
+                onChange={handleSliderChange}
+                aria-labelledby="input-slider"
+                marks
+                min={0}
+                max={10}
+                step={1}
+              />
+            </div>
           </Grid>
         )}
       </Grid>

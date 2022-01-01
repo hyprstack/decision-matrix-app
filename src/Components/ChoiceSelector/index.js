@@ -13,9 +13,9 @@ const useStyles = makeStyles((theme) => {
   };
 });
 
-function ChoiceSelect(props) {
+function ChoiceSelect() {
   const classes = useStyles();
-  const [choices, setChoices] = useState([]); // [{choice: "valueC1"},...]
+  const [choices, setChoices] = useState([]); // [{key: choice, value: "valueC1"},...]
 
   function updateChoices(val, action, choiceIdx) {
     let updatedChoices = [...choices];
@@ -26,6 +26,7 @@ function ChoiceSelect(props) {
 
     if (action === "remove" && exists) {
       updatedChoices.splice(choiceIdx, 1);
+      console.log("updatedChoices deleted", updatedChoices);
     }
 
     if (action === "update" && !exists) {
@@ -37,7 +38,7 @@ function ChoiceSelect(props) {
 
   return (
     <Box sx={{ ...classes.root }}>
-      {choices.map((choice, idx) => {
+      {choices.map((choice, idx, array) => {
         return (
           <Choice
             key={`choice-option-${idx}`}
