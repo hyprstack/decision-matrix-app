@@ -1,21 +1,49 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { makeStyles } from "@mui/styles";
-import { IconButton, Box, Tooltip } from "@mui/material";
+import { IconButton, Tooltip, Typography, Box } from "@mui/material";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
+import DoneAllIcon from "@mui/icons-material/DoneAll";
 
 import Choice from "../Choice";
 
-const useStyles = makeStyles((theme) => {
+const useStyles = makeStyles(() => {
   return {
     root: {
       flexGrow: 1,
     },
+    navPageButtons: {
+      maxWidth: 200,
+      marginLeft: "90%",
+      marginRight: 4,
+      marginTop: 4,
+      marginBottom: 4,
+      display: "flex",
+    },
   };
 });
 
-function ChoiceSelect() {
+function ChoiceSelector(props) {
   const classes = useStyles();
-  const [choices, setChoices] = useState([]); // [{key: choice, value: "valueC1"},...]
+  const { currentPage, setCurrentPage, variables, choices, setChoices } = props;
+  // console.log("Parent props");
+  // console.log(props);
+  const [choicesPage, setChoicesPage] = useState(0);
+  const [disabledNxt, setDisabledNxt] = useState(true);
+
+  useEffect(() => {
+    function ensureValidChoices() {
+      const invalid = choices.filter((cv) => {
+        const { descriptor } = cv;
+        return !descriptor || descriptor === "";
+      });
+
+      return !invalid.length;
+    }
+
+    const isValid = ensureValidChoices();
+    isValid ? setDisabledNxt(false) : setDisabledNxt(true);
+  }, [setDisabledNxt, choices]);
 
   function updateChoices(val, action, choiceIdx) {
     let updatedChoices = [...choices];
@@ -26,7 +54,6 @@ function ChoiceSelect() {
 
     if (action === "remove" && exists) {
       updatedChoices.splice(choiceIdx, 1);
-      console.log("updatedChoices deleted", updatedChoices);
     }
 
     if (action === "update" && !exists) {
@@ -37,27 +64,64 @@ function ChoiceSelect() {
   }
 
   return (
-    <Box sx={{ ...classes.root }}>
-      {choices.map((choice, idx, array) => {
-        return (
+    <Box className={classes.root}>
+      {choices.length ? (
+        <div>
           <Choice
-            key={`choice-option-${idx}`}
-            choiceIdx={idx}
-            choice={choice}
+            choice={choices[choicesPage]}
+            choiceIdx={choicesPage}
             updateChoices={updateChoices}
             removeChoice={updateChoices}
           />
-        );
-      })}
-      <Tooltip title="Add choice">
-        <IconButton
-          onClick={() => updateChoices({ key: "", value: 0 }, "update")}
-        >
-          <AddCircleOutlineIcon />
-        </IconButton>
-      </Tooltip>
+          <div className={classes.navPageButtons}>
+            <Tooltip title="Previous page">
+              <IconButton
+                onClick={() => {
+                  return choicesPage >= 1
+                    ? setChoicesPage(choicesPage - 1)
+                    : setCurrentPage(currentPage - 1);
+                }}
+              >
+                <NavigateBeforeIcon color="secondary" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Add another">
+              <span>
+                <IconButton
+                  disabled={disabledNxt}
+                  onClick={() => {
+                    const exists = choices[choicesPage + 1];
+
+                    if (!exists) {
+                      console.log(variables);
+                      updateChoices(
+                        { variables: [...variables], descriptor: "", total: 0 },
+                        "update"
+                      );
+                    }
+                    return setChoicesPage(choicesPage + 1);
+                  }}
+                >
+                  <AddCircleOutlineIcon
+                    color={disabledNxt ? "disabled" : "primary"}
+                  />
+                </IconButton>
+              </span>
+            </Tooltip>
+          </div>
+          {choicesPage >= 1 ? (
+            <div className={classes.navPageButtons}>
+              <Tooltip title="See results">
+                <IconButton onClick={() => setCurrentPage(currentPage + 1)}>
+                  <DoneAllIcon color={disabledNxt ? "disabled" : "primary"} />
+                </IconButton>
+              </Tooltip>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </Box>
   );
 }
 
-export default ChoiceSelect;
+export default ChoiceSelector;
