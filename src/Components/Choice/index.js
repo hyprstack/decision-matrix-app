@@ -47,10 +47,8 @@ function Choice(props) {
   const {
     updateChoices,
     choiceIdx,
-    choice: { variables, descriptor, total },
+    choice: { userVariables, descriptor, total },
   } = props;
-  // console.log("Child props");
-  // console.log(props);
 
   function calcTotal(v) {
     return v.reduce((acc, cv) => {
@@ -64,16 +62,14 @@ function Choice(props) {
     }, 0);
   }
 
+  //TODO: maybe make the list a list of components instead and hide with css based on index
   function handleSliderChange(newValue, variableIdx) {
-    console.log(newValue, variableIdx);
-    const _vars = [...variables];
-
-    console.log(_vars);
-    const variable = _vars[variableIdx];
-    variable.multiplier = newValue;
+    const _vars = [...userVariables];
+    let variable = _vars[variableIdx];
+    _vars[variableIdx] = { ...variable, multiplier: newValue };
     const total = calcTotal(_vars);
     return updateChoices(
-      { descriptor, variables: _vars, total },
+      { descriptor, userVariables: _vars, total },
       "update",
       choiceIdx
     );
@@ -84,9 +80,9 @@ function Choice(props) {
       target: { value: key },
     } = event;
 
-    const _vars = [...variables];
+    const _vars = [...userVariables];
     return updateChoices(
-      { descriptor: key, total, variables: _vars },
+      { descriptor: key, total, userVariables: _vars },
       "update",
       choiceIdx
     );
@@ -110,47 +106,49 @@ function Choice(props) {
         </Grid>
         {!descriptor ? null : (
           <>
-            {[...variables].map(
-              ({ descriptor: varDescription, multiplier = 0 }, variableIdx) => (
-                <Grid
-                  item
-                  xs={12}
-                  key={`${choiceIdx}-${variableIdx}-variable-key`}
-                >
-                  <div className={classes.variablesContainer}>
-                    <div className={classes.variableDescriptionContainer}>
-                      <Typography
-                        className={classes.sliderValue}
-                        id={`input-slider-choice-${choiceIdx}-${variableIdx}`}
-                        variant="label"
-                      >
-                        {varDescription}
-                      </Typography>
+            {userVariables.map(
+              ({ descriptor: varDescription, multiplier = 0 }, variableIdx) => {
+                return (
+                  <Grid
+                    item
+                    xs={12}
+                    key={`${choiceIdx}-${variableIdx}-variable-key`}
+                  >
+                    <div className={classes.variablesContainer}>
+                      <div className={classes.variableDescriptionContainer}>
+                        <Typography
+                          className={classes.sliderValue}
+                          id={`input-slider-choice-${choiceIdx}-${variableIdx}`}
+                          variant="label"
+                        >
+                          {varDescription}
+                        </Typography>
+                      </div>
+                      <div className={classes.sliderContainer}>
+                        <Typography
+                          className={classes.sliderValue}
+                          id={`input-slider-choice-${choiceIdx}-${variableIdx}`}
+                          variant="label"
+                        >
+                          {multiplier}
+                        </Typography>
+                        <Slider
+                          className={classes.slider}
+                          value={multiplier}
+                          onChange={(event, newValue) => {
+                            return handleSliderChange(newValue, variableIdx);
+                          }}
+                          aria-labelledby={`input-slider-choice-${choiceIdx}-${variableIdx}`}
+                          marks
+                          min={0}
+                          max={4}
+                          step={1}
+                        />
+                      </div>
                     </div>
-                    <div className={classes.sliderContainer}>
-                      <Typography
-                        className={classes.sliderValue}
-                        id={`input-slider-choice-${choiceIdx}-${variableIdx}`}
-                        variant="label"
-                      >
-                        {multiplier}
-                      </Typography>
-                      <Slider
-                        className={classes.slider}
-                        value={multiplier}
-                        onChange={(event, newValue) =>
-                          handleSliderChange(newValue, variableIdx)
-                        }
-                        aria-labelledby={`input-slider-choice-${choiceIdx}-${variableIdx}`}
-                        marks
-                        min={0}
-                        max={4}
-                        step={1}
-                      />
-                    </div>
-                  </div>
-                </Grid>
-              )
+                  </Grid>
+                );
+              }
             )}
           </>
         )}

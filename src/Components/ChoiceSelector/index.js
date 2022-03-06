@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { makeStyles } from "@mui/styles";
-import { IconButton, Tooltip, Typography, Box } from "@mui/material";
+import { IconButton, Tooltip, Box } from "@mui/material";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 
 import Choice from "../Choice";
@@ -25,11 +26,17 @@ const useStyles = makeStyles(() => {
 
 function ChoiceSelector(props) {
   const classes = useStyles();
-  const { currentPage, setCurrentPage, variables, choices, setChoices } = props;
-  // console.log("Parent props");
-  // console.log(props);
+  const { currentPage, setCurrentPage, variables, setParentChoices } = props;
+
   const [choicesPage, setChoicesPage] = useState(0);
   const [disabledNxt, setDisabledNxt] = useState(true);
+  const [choices, setChoices] = useState([]);
+
+  useEffect(() => {
+    if (currentPage === 2 && !choices.length) {
+      setChoices([{ userVariables: [...variables], descriptor: "", total: 0 }]);
+    }
+  }, [currentPage, choices.length, variables]);
 
   useEffect(() => {
     function ensureValidChoices() {
@@ -63,6 +70,12 @@ function ChoiceSelector(props) {
     return setChoices(updatedChoices);
   }
 
+  function setPChoices() {
+    setCurrentPage(currentPage + 1);
+    choices.sort((a, b) => b.total - a.total);
+    return setParentChoices(choices);
+  }
+
   return (
     <Box className={classes.root}>
       {choices.length ? (
@@ -85,7 +98,9 @@ function ChoiceSelector(props) {
                 <NavigateBeforeIcon color="secondary" />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Add another">
+            <Tooltip
+              title={choices[choicesPage + 1] ? "Next page" : "Add another"}
+            >
               <span>
                 <IconButton
                   disabled={disabledNxt}
@@ -93,18 +108,28 @@ function ChoiceSelector(props) {
                     const exists = choices[choicesPage + 1];
 
                     if (!exists) {
-                      console.log(variables);
+                      console.log("Variables ", variables);
                       updateChoices(
-                        { variables: [...variables], descriptor: "", total: 0 },
+                        {
+                          userVariables: [...variables],
+                          descriptor: "",
+                          total: 0,
+                        },
                         "update"
                       );
                     }
                     return setChoicesPage(choicesPage + 1);
                   }}
                 >
-                  <AddCircleOutlineIcon
-                    color={disabledNxt ? "disabled" : "primary"}
-                  />
+                  {choices[choicesPage + 1] ? (
+                    <NavigateNextIcon
+                      color={disabledNxt ? "disabled" : "primary"}
+                    />
+                  ) : (
+                    <AddCircleOutlineIcon
+                      color={disabledNxt ? "disabled" : "primary"}
+                    />
+                  )}
                 </IconButton>
               </span>
             </Tooltip>
@@ -112,7 +137,7 @@ function ChoiceSelector(props) {
           {choicesPage >= 1 ? (
             <div className={classes.navPageButtons}>
               <Tooltip title="See results">
-                <IconButton onClick={() => setCurrentPage(currentPage + 1)}>
+                <IconButton onClick={() => setPChoices()}>
                   <DoneAllIcon color={disabledNxt ? "disabled" : "primary"} />
                 </IconButton>
               </Tooltip>
